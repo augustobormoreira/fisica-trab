@@ -27,7 +27,7 @@ const nameBlocks = (
   positionY: number,
   blockName: string,
 ) => {
-  ctx.font = "bold 40px Arial";
+  ctx.font = "bold 30px Arial";
   ctx.fillStyle = "black";
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
@@ -73,12 +73,14 @@ export const useBlocksScene = (
   }, [onBlockClickOpenConfiguration]);
 
   useEffect(() => {
-    onCollisionsUpdateRef.current = onCollisionsUpdate
+    onCollisionsUpdateRef.current = onCollisionsUpdate;
   }, [onCollisionsUpdate]);
 
   useEffect(() => {
     if (!sceneRef.current) return;
     allBoxesRef.current = [];
+    allCollisions.current = [];
+    onCollisionsUpdateRef.current([]);
 
     const engine = Engine.create();
 
@@ -150,7 +152,10 @@ export const useBlocksScene = (
     boxBRef.current = boxB;
     boxCRef.current = boxC;
 
-    const ground = Bodies.rectangle(550, 710, 1000, 60, { isStatic: true, label: "ground" });
+    const ground = Bodies.rectangle(550, 710, 1000, 60, {
+      isStatic: true,
+      label: "ground",
+    });
 
     const mouse = Mouse.create(render.canvas);
     const mouseConstraint = MouseConstraint.create(engine, { mouse });
@@ -160,9 +165,6 @@ export const useBlocksScene = (
 
     Events.on(render, "afterRender", () => {
       const ctx = render.context;
-      nameBlocks(ctx, boxA.position.x, boxA.position.y, "A");
-      nameBlocks(ctx, boxB.position.x, boxB.position.y, "B");
-      nameBlocks(ctx, boxC.position.x, boxC.position.y, "C");
 
       drawForceOnBlock(
         allBoxesRef.current[0].position.x - 100 - BOX_W_AND_H / 2,
@@ -173,6 +175,15 @@ export const useBlocksScene = (
         false,
         24,
       );
+
+      for (let i = 0; i < system1BlocksCount; i++) {
+        nameBlocks(
+          ctx,
+          allBoxesRef.current[i].position.x,
+          allBoxesRef.current[i].position.y,
+          allBoxesRef.current[i].label,
+        );
+      }
 
       if (forcaRef.current) {
         drawForceOnBlock(
@@ -191,11 +202,12 @@ export const useBlocksScene = (
               c.collisionName ===
               `colisao${i == 0 ? "" : ALPHABET[i - 1]}${ALPHABET[i]}`,
           );
+
           if (colisaoExiste) {
             drawForceOnBlock(
               allBoxesRef.current[i].position.x,
               allBoxesRef.current[i].position.y,
-              `F(${allBoxesRef.current[i-1].label}${allBoxesRef.current[i].label})`,
+              `F(${allBoxesRef.current[i - 1].label}${allBoxesRef.current[i].label})`,
               BOX_W_AND_H / 2,
               "red",
               false,
@@ -219,63 +231,59 @@ export const useBlocksScene = (
       if (!forcaRef.current) return;
       if (!allBoxesRef.current) return;
 
-      // Usar massas REAIS para calcular atrito estático
-      let somaAtritos = 0;
-      for (let i = 0; i < system1BlocksCount; i++) {
-        const colisaoExiste = allCollisions.current.find(
-          (c) =>
-            c.collisionName ===
-            `colisao${i == 0 ? "" : ALPHABET[i - 1]}${ALPHABET[i]}`,
-        );
-        somaAtritos += colisaoExiste
-          ? allBoxesRef.current[i].mass *
-            10 *
-            allBoxesRef.current[i].frictionStatic
-          : 0;
-      }
-      /*const Fae_A = findStaticFrictionForce(
-        massaRealA.current,
-        boxARef.current.frictionStatic,
-      );
-      const Fae_B = findStaticFrictionForce(
-        massaRealB.current,
-        boxBRef.current.frictionStatic,
-      );
-      const Fae_C = findStaticFrictionForce(
-        massaRealC.current,
-        boxCRef.current.frictionStatic,
-      );
+      // 1. O Bloco A SEMPRE tem seu atrito estático considerado,
+      // pois a força está sendo aplicada diretamente nele.
+      const blocoA = allBoxesRef.current[0];
+      let somaAtritos = blocoA.mass * 10 * blocoA.frictionStatic;
 
-      // Só soma atrito de B e C se já colidiu
-      /*const somaAtritos =
-        Fae_A +
-        (colisaoABRef.current ? Fae_B : 0) +
-        (colisaoBCRef.current ? Fae_C : 0);
-*/
+      // 2. Somamos o atrito dos blocos seguintes (B, C...) APENAS se eles já colidiram
+      for (let i = 1; i < system1BlocksCount; i++) {
+        const blocoAnterior = allBoxesRef.current[i - 1];
+        const blocoAtual = allBoxesRef.current[i];
+
+        // Buscamos se existe uma colisão registrada entre o bloco anterior e o atual
+        // Ex: "colisaoAB" para i = 1, "colisaoBC" para i = 2
+        const nomeColisao = `colisao${blocoAnterior.label}${blocoAtual.label}`;
+        const colisaoExiste = allCollisions.current.find(
+          (c) => c.collisionName === nomeColisao,
+        );
+
+        if (colisaoExiste) {
+          // Se colidiu, o atrito estático deste bloco entra na resistência total do sistema
+          somaAtritos += blocoAtual.mass * 10 * blocoAtual.frictionStatic;
+        }
+      }
+
+      // 3. Verificação resultante: se a força não supera o atrito acumulado dos blocos em contato
       if (FORCA_INICIAL.current <= somaAtritos) {
+        // Zera a velocidade de todos os blocos para simular que o sistema travou/não moveu
         for (let i = 0; i < system1BlocksCount; i++) {
           Body.setVelocity(allBoxesRef.current[i], { x: 0, y: 0 });
         }
-        return; // ← return faltava aqui
+        return;
       }
 
+      // 4. Se a força for maior que o atrito ativo atual, apenas o Bloco A recebe o empurrão inicial
+      // O Matter.js se encarrega de transmitir o impacto de forma física e natural para os outros blocos.
       const deltaV = ACELERACAO_SISTEMA.current * SCALE;
 
-      Body.setVelocity(allBoxesRef.current[0], {
-        x: allBoxesRef.current[0].velocity.x + deltaV,
-        y: allBoxesRef.current[0].velocity.y,
+      Body.setVelocity(blocoA, {
+        x: blocoA.velocity.x + deltaV,
+        y: blocoA.velocity.y,
       });
     });
 
     Events.on(engine, "collisionStart", (event) => {
-      event.pairs.forEach((pair) => {     
+      event.pairs.forEach((pair) => {
         const { bodyA, bodyB } = pair;
 
-        if(bodyA.label === "ground" || bodyB.label === "ground") return;
+        if (bodyA.label === "ground" || bodyB.label === "ground") return;
 
         const newCollisionName = `colisao${bodyA.label}${bodyB.label}`;
-        const jaExiste = allCollisions.current.find(c => c.collisionName === newCollisionName);
-        if(jaExiste) return;
+        const jaExiste = allCollisions.current.find(
+          (c) => c.collisionName === newCollisionName,
+        );
+        if (jaExiste) return;
 
         const hasCollided = true;
         const newCollision = {
@@ -357,14 +365,21 @@ export const useBlocksScene = (
     if (!allBoxesRef.current) return;
     forcaRef.current = false;
 
+    allCollisions.current = [];
+    onCollisionsUpdateRef.current([]);
+
     for (let i = 0; i < system1BlocksCount; i++) {
-      if(allCollisions.current[i]) allCollisions.current[i].hasCollided = false;
-      resetPosition(
-        allBoxesRef.current[i],
-        i == 0
-          ? initialBoxXPosition
-          : allBoxesRef.current[i - 1].position.x + 80,
-      );
+      const novaPosicaoX = initialBoxXPosition + i * 80;
+
+      const box = allBoxesRef.current[i];
+
+      Body.setVelocity(box, { x: 0, y: 0 });
+      Body.setAngularVelocity(box, 0);
+      Body.setAngle(box, 0);
+      box.force = { x: 0, y: 0 };
+      box.torque = 0;
+
+      Body.setPosition(box, { x: novaPosicaoX, y: initialBoxYPosition - 30 });
     }
   };
 
@@ -448,6 +463,13 @@ export const useBlocksScene = (
     FORCA_INICIAL.current = valor_f;
   };
 
+  const setMassa = (label: string, massa: number) => {
+    const foundBody = allBoxesRef.current.find((box) => box.label === label);
+    if (foundBody) {
+      Body.setMass(foundBody, massa);
+    }
+  };
+
   // Setter para o BlockModal atualizar a massa real
   const setMassaReal = (label: string, valor: number) => {
     if (label === "A") massaRealA.current = valor;
@@ -467,20 +489,20 @@ export const useBlocksScene = (
   };
 
   const getAllBoxes = () => {
-    return allBoxesRef.current
-  }
+    return allBoxesRef.current;
+  };
 
   const getMassByLabel = (label: string) => {
-    if(!allBoxesRef.current) return 0;
-    const box = allBoxesRef.current.find(box => box.label === label)
-    if(box) return box.mass;
+    if (!allBoxesRef.current) return 0;
+    const box = allBoxesRef.current.find((box) => box.label === label);
+    if (box) return box.mass;
     return 0;
-  } 
+  };
 
   const getAllCollisions = () => {
-    if(!allCollisions.current) return [];
+    if (!allCollisions.current) return [];
     return allCollisions.current;
-  }
+  };
 
   return {
     resetPositionOfAllBlocks,
@@ -493,7 +515,7 @@ export const useBlocksScene = (
     setForcaInicial,
     findForceA_B,
     findForceB_C,
-    setMassaReal,
+    setMassa,
     getMassaReal,
     massaRealA,
     massaRealB,

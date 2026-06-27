@@ -111,6 +111,22 @@ export const ManagementPanel = ({
         )}
         {sistemaAtual === "sistema2" && (
           <>
+            <div className="flex flex-col items-center w-50 mt-3 gap-1">
+              <label className="text-sm font-serif text-gray-600">
+                Blocos direita (1-8)
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={8}
+                defaultValue={2}
+                onChange={(e) => {
+                  const val = Math.min(8, Math.max(1, Number(e.target.value)));
+                  setRightBlockCount(val);
+                }}
+                className="w-full text-center border-1 border-gray-500 rounded-xs font-serif focus:outline-none focus:border-gray-700"
+              />
+            </div>
             <button
               className="w-50 h-auto font-serif border-1 rounded-xs border-gray-500 hover:text-white hover:bg-gray-500"
               onClick={() => {
@@ -151,22 +167,6 @@ export const ManagementPanel = ({
             >
               Randomizar
             </button>
-            <div className="flex flex-col items-center w-50 mt-3 gap-1">
-              <label className="text-sm font-serif text-gray-600">
-                Blocos direita (1-8)
-              </label>
-              <input
-                type="number"
-                min={1}
-                max={8}
-                defaultValue={2}
-                onChange={(e) => {
-                  const val = Math.min(8, Math.max(1, Number(e.target.value)));
-                  setRightBlockCount(val);
-                }}
-                className="w-full text-center border-1 border-gray-500 rounded-xs font-serif focus:outline-none focus:border-gray-700"
-              />
-            </div>
           </>
         )}
       </div>

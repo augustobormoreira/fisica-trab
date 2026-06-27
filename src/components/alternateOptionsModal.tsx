@@ -14,7 +14,7 @@ export default function AlternateOptions({
   system: Sistema;
   rightBlockCount: number,
 }) {
-  const alphabet = ["B", "C", "D", "E", "F", "G", "H", "I"]
+  const alphabet = ["A", "B", "C", "D", "E", "F", "G", "H", "I"]
   const [numeroInicial, setNumeroInicial] = useState<number>(0);
   const [razao, setRazao] = useState<number>(0);
   const [menor, setMenor] = useState<number>(0);
@@ -29,62 +29,75 @@ export default function AlternateOptions({
   };
 
   const setMassasDeAcordoComLabelSistema1 = (label: string) => {
+    const index = Math.random() < 0.5 ? rightBlockCount-1 : 0
     if (label === "PG") {
-      //set massa do bloco A
-      setMassa("A", numeroInicial);
-
-      //setMassa do bloco B
-      setMassa("B", numeroInicial * razao);
-
-      //setMassa do bloco C
-      setMassa("C", numeroInicial * razao ** 2);
+      if(index==rightBlockCount-1){
+        let cont = 0;
+        for(let i = index; i >= 0; i--){
+          setMassa(alphabet[i], numeroInicial * (razao ** (cont++)));
+        }
+      }
+      if(index==0){
+        let cont = 0;
+        for(let i = index; i <= rightBlockCount; i++){
+          setMassa(alphabet[i], numeroInicial * (razao ** (cont++)));
+        }
+      }
     }
     if (label === "PA") {
-      setMassa("A", numeroInicial);
-
-      //setMassa do bloco B
-      setMassa("B", numeroInicial + razao);
-
-      //setMassa do bloco C
-      setMassa("C", numeroInicial + razao * 2);
+      if(index==rightBlockCount-1){
+        let cont = 0;
+        for(let i = index; i >= 0; i--){
+          setMassa(alphabet[i], numeroInicial + (razao * (cont++)));
+        }
+      }
+      if(index==0){
+        let cont = 0;
+        for(let i = index; i <= rightBlockCount; i++){
+          setMassa(alphabet[i], numeroInicial + (razao * (cont++)));
+        }
+      }
     }
     if (label === "AR") {
-      //set massa do bloco A
-      setMassa("A", Math.floor(Math.random() * (maior - menor + 1)) + menor);
-
-      //setMassa do bloco B
-      setMassa("B", Math.floor(Math.random() * (maior - menor + 1)) + menor);
-
-      //setMassa do bloco C
-      setMassa("C", Math.floor(Math.random() * (maior - menor + 1)) + menor);
+      for(let i = 0; i < rightBlockCount; i++) {
+        setMassa(alphabet[i], Math.floor(Math.random() * (maior - menor + 1)) + menor)
+      }
     }
   };
 
   const setMassasDeAcordoComLabelSistema2 = (label: string) => {
+    const index = Math.random() < 0.5 ? rightBlockCount-1 : 0
     if (label === "PG") {
-      //set massa do bloco A
-      setMassa("A", numeroInicial);
-
-      for(let i = 0; i < rightBlockCount; i++){
-        setMassa(alphabet[i], numeroInicial * (razao ** (i+1)))
+      if(index==rightBlockCount-1){
+        let cont = 0;
+        for(let i = index; i >= 0; i--){
+          setMassa(alphabet[i+1], numeroInicial * (razao ** (cont++)));
+        }
+      }
+      if(index==0){
+        let cont = 0;
+        for(let i = index; i <= rightBlockCount; i++){
+          setMassa(alphabet[i+1], numeroInicial * (razao ** (cont++)));
+        }
       }
     }
     if (label === "PA") {
-      setMassa("A", numeroInicial);
-
-      for(let i = 0; i < rightBlockCount; i++){
-        setMassa(alphabet[i], numeroInicial + (razao * (i+1)))
+      if(index==rightBlockCount-1){
+        let cont = 0;
+        for(let i = index; i >= 0; i--){
+          setMassa(alphabet[i+1], numeroInicial + (razao * (cont++)));
+        }
       }
-
-      //setMassa do bloco C
-      setMassa("C", numeroInicial + razao * 2);
+      if(index==0){
+        let cont = 0;
+        for(let i = index; i <= rightBlockCount; i++){
+          setMassa(alphabet[i+1], numeroInicial + (razao * (cont++)));
+        }
+      }
     }
     if (label === "AR") {
-      //set massa do bloco A
-      setMassa("A", Math.floor(Math.random() * (maior - menor + 1)) + menor);
-
-      for(let i = 0; i < rightBlockCount; i++){
-        setMassa(alphabet[i], Math.floor(Math.random() * (maior - menor + 1)) + menor)
+      for(let i = 0; i < rightBlockCount; i++) {
+        setMassa(alphabet[i+1], Math.floor(Math.random() * (maior - menor + 1)) + menor)
       }
     }
   }

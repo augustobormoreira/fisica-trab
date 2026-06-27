@@ -42,11 +42,8 @@ export default function Home() {
     disableMouse,
     enableMouse,
     findAcceleration,
-    findFrictionForce,
-    findForceA_B,
-    findForceB_C,
     setForcaInicial,
-    setMassaReal,
+    setMassa,
     getAllBoxes,
     getMassByLabel,
   } = useBlocksScene(
@@ -85,8 +82,7 @@ export default function Home() {
 
   const handleReset = () => {
     resetPositionOfAllBlocks();
-    setColidiuAB(false);
-    setColidiuBC(false);
+    setCollisions([])
     setStartSystem(false);
     setSystemReset((prev) => !prev);
   };
@@ -125,14 +121,9 @@ export default function Home() {
           <SystemOnePanel
             blocks={blocks}
             findAcceleration={findAcceleration}
-            findForceA_B={findForceA_B}
-            findForceB_C={findForceB_C}
-            findFrictionForce={findFrictionForce}
             setForcaInicial={setForcaInicial}
             applyForce={applyForce}
             startSystem={startSystem}
-            colidiuAB={colidiuAB}
-            colidiuBC={colidiuBC}
             systemReset={systemReset}
             collisions={collisions}
             getMassByLabel={getMassByLabel}
@@ -151,7 +142,7 @@ export default function Home() {
         <BlockModal
           system={sistemaAtivo}
           body={selectedBody}
-          onSave={(label, massaReal) => setMassaReal(label, massaReal)}
+          onSave={(label, massaReal) => setMassa(label, massaReal)}
           onClose={() => {
             setSelectedBody(null);
             enableMouse2();
@@ -174,9 +165,9 @@ export default function Home() {
         <AlternateOptions
           label={selectedAlternateOption}
           onClose={() => setSelectedAlternateOption(null)}
-          setMassa={sistemaAtivo=="sistema1" ? setMassaReal : setMassaBloco}
+          setMassa={sistemaAtivo=="sistema1" ? setMassa : setMassaBloco}
           system={sistemaAtivo}
-          rightBlockCount={rightBlockCount}
+          rightBlockCount={sistemaAtivo=="sistema1" ? system1BlockCount : rightBlockCount}
         />
       )}
     </div>

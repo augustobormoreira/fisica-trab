@@ -21,7 +21,9 @@ export const BlockModal = ({
   const handleMassChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
     setMassaInput(val);
-    Body.setMass(body, val); // mantém sincronizado com Matter.js
+    if (val > 0) {
+      Body.setMass(body, val);
+    }
   };
 
   const handleFrictionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,6 +34,31 @@ export const BlockModal = ({
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     Body.set(body, "frictionStatic", Number(e.target.value));
+  };
+
+  const performNegativeOrZeroCheckOnSystem1 = () => {
+    if (massaInput < 0) {
+      alert("Massa não pode ser negativa!");
+      return;
+    } else if (massaInput == 0) {
+      alert("Massa não pode ser zero!");
+      return;
+    } else {
+      onSave!(body.label, massaInput);
+      onClose();
+    }
+  };
+
+  const performNegativeOrZeroCheckOnSystem2 = () => {
+    if (massaInput < 0) {
+      alert("Massa não pode ser negativa!");
+      return;
+    } else if (massaInput == 0) {
+      alert("Massa não pode ser zero!");
+    } else {
+      Body.setMass(body, massaInput);
+      onClose();
+    }
   };
 
   return (
@@ -67,10 +94,7 @@ export const BlockModal = ({
               className="border rounded w-full px-2 py-1 mb-4"
             />
             <button
-              onClick={() => {
-                onSave!(body.label, massaInput); // ← salva o valor do input
-                onClose();
-              }}
+              onClick={performNegativeOrZeroCheckOnSystem1}
               className="w-full bg-blue-400 text-white rounded py-2"
             >
               Salvar
@@ -80,10 +104,7 @@ export const BlockModal = ({
 
         {system === "sistema2" && (
           <button
-            onClick={() => {
-              Body.setMass(body, massaInput)
-              onClose();
-            }}
+            onClick={performNegativeOrZeroCheckOnSystem2}
             className="w-full bg-blue-400 text-white rounded py-2"
           >
             Salvar
