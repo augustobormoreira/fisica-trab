@@ -1,0 +1,1 @@
+export type Sistema = "sistema1" | "sistema2";
