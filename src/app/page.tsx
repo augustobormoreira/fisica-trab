@@ -10,6 +10,7 @@ import { BlockModal } from "@/components/blockModal";
 import AlternateOptions from "@/components/alternateOptionsModal";
 import SystemOnePanel from "@/components/systemOnePanel";
 import SystemTwoPanel from "@/components/systemTwoPanel";
+import { Collision } from "@/types/collision";
 
 export default function Home() {
   const sceneRef1 = useRef<HTMLDivElement>(null);
@@ -25,8 +26,10 @@ export default function Home() {
   >(null);
   const [rightBlockCount, setRightBlockCount] = useState<number>(2);
   const [sistemaAtivo, setSistemaAtivo] = useState<Sistema>("sistema1");
-  const [blocks, setBlocks] = useState<RefObject<Matter.Body | null>[]>([]);
+  const [blocks, setBlocks] = useState<Matter.Body []>([]);
   const [blocksS2, setBlocksS2] = useState<Matter.Body[]>([]);
+  const [collisions, setCollisions] = useState<Collision[]>([]);
+  const [system1BlockCount, setSystem1BlockCount] = useState<number>(7);
 
   const handleBlockClick = useCallback((body: Matter.Body) => {
     setSelectedBody(body);
@@ -36,7 +39,6 @@ export default function Home() {
   const {
     applyForce,
     resetPositionOfAllBlocks,
-    getBlocksAsArray,
     disableMouse,
     enableMouse,
     findAcceleration,
@@ -45,14 +47,13 @@ export default function Home() {
     findForceB_C,
     setForcaInicial,
     setMassaReal,
-    massaRealA,
-    massaRealB,
-    massaRealC,
+    getAllBoxes,
+    getMassByLabel,
   } = useBlocksScene(
     sceneRef1,
     handleBlockClick,
-    () => setColidiuAB(true),
-    () => setColidiuBC(true),
+    (newCollisions) => setCollisions([...newCollisions]),
+    system1BlockCount,
   );
 
   const setAlternateOption = (alternateOption: string) => {
@@ -73,8 +74,8 @@ export default function Home() {
   });
 
   useEffect(() => {
-    setBlocks(getBlocksAsArray());
-  }, []);
+    setBlocks(getAllBoxes());
+  }, [system1BlockCount]);
   useEffect(() => {
     const blocks = getAllBlocksAsArray();
     if (blocks.length > 0) {
@@ -92,7 +93,7 @@ export default function Home() {
 
   return (
     <div className="w-full h-full flex flex-row overflow-hidden">
-      <div className="w-1/5 shrink-0 h-full border-r border-gray-300 flex items-start pt-4 justify-center">
+      <div className="w-1/5 shrink-0 h-full border-l border-gray-300 flex flex-col items-start pt-4 px-4 gap-2 overflow-y-auto min-w-0">
         <ManagementPanel
           resetPositionOfAllBlocks={handleReset}
           onSistemaChange={setSistemaAtivo}
@@ -101,6 +102,7 @@ export default function Home() {
           setStartSystem={setStartSystem}
           setSystemReset={setSystemReset}
           setAlternateOption={setAlternateOption}
+          setSystem1BlockCount={setSystem1BlockCount}
           setRightBlockCount={setRightBlockCount}
         />
       </div>
@@ -132,9 +134,8 @@ export default function Home() {
             colidiuAB={colidiuAB}
             colidiuBC={colidiuBC}
             systemReset={systemReset}
-            massaRealA={massaRealA}
-            massaRealB={massaRealB}
-            massaRealC={massaRealC}
+            collisions={collisions}
+            getMassByLabel={getMassByLabel}
           />
         )}
 
@@ -150,13 +151,6 @@ export default function Home() {
         <BlockModal
           system={sistemaAtivo}
           body={selectedBody}
-          massaReal={
-            selectedBody.label === "A"
-              ? massaRealA.current
-              : selectedBody.label === "B"
-                ? massaRealB.current
-                : massaRealC.current
-          }
           onSave={(label, massaReal) => setMassaReal(label, massaReal)}
           onClose={() => {
             setSelectedBody(null);

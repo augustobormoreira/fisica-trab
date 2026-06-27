@@ -11,6 +11,7 @@ export const ManagementPanel = ({
   setSystemReset,
   setAlternateOption,
   setRightBlockCount,
+  setSystem1BlockCount,
 }: {
   resetPositionOfAllBlocks: () => void;
   onSistemaChange: (sistema: Sistema) => void;
@@ -20,6 +21,7 @@ export const ManagementPanel = ({
   setSystemReset: (resetSystem: boolean) => void;
   setAlternateOption: (alternateOption: string) => void;
   setRightBlockCount: (rightBlockCount: number) => void;
+  setSystem1BlockCount: (val: number) => void;
 }) => {
   const [sistemaAtual, setSistema] = useState<Sistema>("sistema1");
 
@@ -47,6 +49,22 @@ export const ManagementPanel = ({
       <div className="flex flex-col justify-center items-center w-90 h-90">
         {sistemaAtual === "sistema1" && (
           <>
+            <div className="flex flex-col items-center w-50 mt-3 gap-1">
+              <label className="text-sm font-serif text-gray-600">
+                Blocos (2-10)
+              </label>
+              <input
+                type="number"
+                min={2}
+                max={10}
+                defaultValue={7}
+                onChange={(e) => {
+                  const val = Math.min(10, Math.max(2, Number(e.target.value)));
+                  setSystem1BlockCount(val);
+                }}
+                className="w-full text-center border-1 border-gray-500 rounded-xs font-serif focus:outline-none focus:border-gray-700"
+              />
+            </div>
             <button
               className="w-50 h-auto font-serif border-1 rounded-xs border-gray-500 hover:text-white hover:bg-gray-500"
               onClick={() => {

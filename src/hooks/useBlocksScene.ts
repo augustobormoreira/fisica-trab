@@ -11,12 +11,15 @@ import {
   MouseConstraint,
 } from "matter-js";
 import { useEffect, useRef } from "react";
+import { Collision } from "@/types/collision";
 
 const boxSettings = [
   { positionX: 200, positionY: 700, width: 200, height: 200 },
   { positionX: 550, positionY: 700, width: 100, height: 100 },
-  { positionX: 670, positionY: 700, width: 50,  height: 50  },
+  { positionX: 670, positionY: 700, width: 50, height: 50 },
 ];
+
+const ALPHABET = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
 
 const nameBlocks = (
   ctx: CanvasRenderingContext2D,
@@ -34,22 +37,24 @@ const nameBlocks = (
 export const useBlocksScene = (
   sceneRef: RefObject<HTMLDivElement | null>,
   onBlockClickOpenConfiguration: (body: Matter.Body) => void,
-  onColisaoAB: () => void,
-  onColisaoBC: () => void,
+  onCollisionsUpdate: (collisions: Collision[]) => void,
+  system1BlocksCount: number,
 ) => {
   const forcaRef = useRef(false);
   const boxARef = useRef<Body>(null);
   const boxBRef = useRef<Body>(null);
   const boxCRef = useRef<Body>(null);
+  const allBoxesRef = useRef<Body[]>([]);
+  const allCollisions = useRef<Collision[]>([]);
+  const onCollisionsUpdateRef = useRef(onCollisionsUpdate);
   const renderRef = useRef<Render>(null);
-  const colisaoABRef = useRef(false);
-  const colisaoBCRef = useRef(false);
-  const onColisaoABRef = useRef(onColisaoAB);
-  const onColisaoBCRef = useRef(onColisaoBC);
   const mouseConstraintRef = useRef<MouseConstraint>(null);
   const onBlockClickRef = useRef(onBlockClickOpenConfiguration);
+  const ALPHABET = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
+  const initialBoxXPosition = 200;
+  const initialBoxYPosition = 700;
+  const BOX_W_AND_H = 50;
 
-  // Massas reais em kg (separadas da massa interna do Matter.js)
   const massaRealA = useRef<number>(40);
   const massaRealB = useRef<number>(10);
   const massaRealC = useRef<number>(90);
@@ -68,12 +73,12 @@ export const useBlocksScene = (
   }, [onBlockClickOpenConfiguration]);
 
   useEffect(() => {
-    onColisaoABRef.current = onColisaoAB;
-    onColisaoBCRef.current = onColisaoBC;
-  }, [onColisaoAB, onColisaoBC]);
+    onCollisionsUpdateRef.current = onCollisionsUpdate
+  }, [onCollisionsUpdate]);
 
   useEffect(() => {
     if (!sceneRef.current) return;
+    allBoxesRef.current = [];
 
     const engine = Engine.create();
 
@@ -89,33 +94,69 @@ export const useBlocksScene = (
     });
     renderRef.current = render;
 
+    for (let i = 0; i < system1BlocksCount; i++) {
+      const newBody = Bodies.rectangle(
+        i == 0
+          ? initialBoxXPosition
+          : allBoxesRef.current[i - 1].position.x + 80,
+        initialBoxYPosition - 30,
+        BOX_W_AND_H,
+        BOX_W_AND_H,
+        {
+          label: ALPHABET[i],
+          render: {
+            fillStyle: "#FFF",
+            strokeStyle: "#000",
+            lineWidth: 1,
+          },
+        },
+      );
+      Body.setMass(newBody, 10);
+      allBoxesRef.current.push(newBody);
+    }
+
     const boxA = Bodies.rectangle(
-      boxSettings[0].positionX, boxSettings[0].positionY,
-      boxSettings[0].width, boxSettings[0].height,
-      { label: "A", render: { fillStyle: "#FFF", strokeStyle: "#000", lineWidth: 1 } },
+      boxSettings[0].positionX,
+      boxSettings[0].positionY,
+      boxSettings[0].width,
+      boxSettings[0].height,
+      {
+        label: "A",
+        render: { fillStyle: "#FFF", strokeStyle: "#000", lineWidth: 1 },
+      },
     );
     const boxB = Bodies.rectangle(
-      boxSettings[1].positionX, boxSettings[1].positionY,
-      boxSettings[1].width, boxSettings[1].height,
-      { label: "B", render: { fillStyle: "#FFF", strokeStyle: "#000", lineWidth: 1 } },
+      boxSettings[1].positionX,
+      boxSettings[1].positionY,
+      boxSettings[1].width,
+      boxSettings[1].height,
+      {
+        label: "B",
+        render: { fillStyle: "#FFF", strokeStyle: "#000", lineWidth: 1 },
+      },
     );
     const boxC = Bodies.rectangle(
-      boxSettings[2].positionX, boxSettings[2].positionY,
-      boxSettings[2].width, boxSettings[2].height,
-      { label: "C", render: { fillStyle: "#FFF", strokeStyle: "#000", lineWidth: 1 } },
+      boxSettings[2].positionX,
+      boxSettings[2].positionY,
+      boxSettings[2].width,
+      boxSettings[2].height,
+      {
+        label: "C",
+        render: { fillStyle: "#FFF", strokeStyle: "#000", lineWidth: 1 },
+      },
     );
 
     boxARef.current = boxA;
     boxBRef.current = boxB;
     boxCRef.current = boxC;
 
-    const ground = Bodies.rectangle(550, 710, 1000, 60, { isStatic: true });
+    const ground = Bodies.rectangle(550, 710, 1000, 60, { isStatic: true, label: "ground" });
 
     const mouse = Mouse.create(render.canvas);
     const mouseConstraint = MouseConstraint.create(engine, { mouse });
     mouseConstraintRef.current = mouseConstraint;
     Composite.add(engine.world, mouseConstraint);
-    Composite.add(engine.world, [boxA, boxB, boxC, ground]);
+    Composite.add(engine.world, [...allBoxesRef.current, ground]);
 
     Events.on(render, "afterRender", () => {
       const ctx = render.context;
@@ -124,99 +165,126 @@ export const useBlocksScene = (
       nameBlocks(ctx, boxC.position.x, boxC.position.y, "C");
 
       drawForceOnBlock(
-        boxA.position.x, boxA.position.y,
-        boxSettings[0].width, "F", boxSettings[0].width, "red", false,
+        allBoxesRef.current[0].position.x - 100 - BOX_W_AND_H / 2,
+        allBoxesRef.current[0].position.y,
+        "F",
+        100,
+        "red",
+        false,
+        24,
       );
 
       if (forcaRef.current) {
-        if (colisaoABRef.current) {
-          drawForceOnBlock(
-            boxB.position.x, boxB.position.y,
-            boxSettings[1].width, "Fab", boxSettings[1].width, "red", false,
-          );
-          drawForceOnBlock(
-            boxA.position.x - boxSettings[1].width, boxA.position.y,
-            boxSettings[1].width, "Fba", boxSettings[1].width, "blue", true,
-          );
-          drawForceOnBlock(
-            boxB.position.x - boxSettings[1].width / 2,
-            boxB.position.y + boxSettings[1].height / 2,
-            boxSettings[1].width, "atr b", boxSettings[1].width / 2, "green", true,
-          );
-        }
-
-        if (colisaoBCRef.current) {
-          drawForceOnBlock(
-            boxC.position.x, boxC.position.y,
-            boxSettings[2].width, "Fbc", boxSettings[2].width, "red", false,
-          );
-          drawForceOnBlock(
-            boxB.position.x - boxSettings[2].width, boxB.position.y,
-            boxSettings[2].width, "Fcb", boxSettings[2].width, "blue", true,
-          );
-          drawForceOnBlock(
-            boxC.position.x - boxSettings[2].width / 2,
-            boxC.position.y + boxSettings[2].height / 2,
-            boxSettings[2].width, "atr c", boxSettings[2].width / 2, "green", true,
-          );
-        }
-
         drawForceOnBlock(
-          boxA.position.x - boxSettings[0].width / 2,
-          boxA.position.y + boxSettings[0].height / 2,
-          boxSettings[0].width, "atr a", boxSettings[0].width / 2, "green", true,
+          allBoxesRef.current[0].position.x - BOX_W_AND_H / 2,
+          allBoxesRef.current[0].position.y + BOX_W_AND_H / 2,
+          "fatr(a)",
+          BOX_W_AND_H / 2,
+          "green",
+          true,
+          17,
         );
+
+        for (let i = 0; i < system1BlocksCount; i++) {
+          const colisaoExiste = allCollisions.current.find(
+            (c) =>
+              c.collisionName ===
+              `colisao${i == 0 ? "" : ALPHABET[i - 1]}${ALPHABET[i]}`,
+          );
+          if (colisaoExiste) {
+            drawForceOnBlock(
+              allBoxesRef.current[i].position.x,
+              allBoxesRef.current[i].position.y,
+              `F(${allBoxesRef.current[i-1].label}${allBoxesRef.current[i].label})`,
+              BOX_W_AND_H / 2,
+              "red",
+              false,
+              17,
+            );
+            drawForceOnBlock(
+              allBoxesRef.current[i].position.x - BOX_W_AND_H / 2,
+              allBoxesRef.current[i].position.y + BOX_W_AND_H / 2,
+              `fatr(${allBoxesRef.current[i].label})`,
+              BOX_W_AND_H / 2,
+              "green",
+              true,
+              17,
+            );
+          }
+        }
       }
     });
 
     Events.on(engine, "afterUpdate", () => {
       if (!forcaRef.current) return;
-      if (!boxARef.current || !boxBRef.current || !boxCRef.current) return;
+      if (!allBoxesRef.current) return;
 
       // Usar massas REAIS para calcular atrito estático
-      const Fae_A = findStaticFrictionForce(massaRealA.current, boxARef.current.frictionStatic);
-      const Fae_B = findStaticFrictionForce(massaRealB.current, boxBRef.current.frictionStatic);
-      const Fae_C = findStaticFrictionForce(massaRealC.current, boxCRef.current.frictionStatic);
+      let somaAtritos = 0;
+      for (let i = 0; i < system1BlocksCount; i++) {
+        const colisaoExiste = allCollisions.current.find(
+          (c) =>
+            c.collisionName ===
+            `colisao${i == 0 ? "" : ALPHABET[i - 1]}${ALPHABET[i]}`,
+        );
+        somaAtritos += colisaoExiste
+          ? allBoxesRef.current[i].mass *
+            10 *
+            allBoxesRef.current[i].frictionStatic
+          : 0;
+      }
+      /*const Fae_A = findStaticFrictionForce(
+        massaRealA.current,
+        boxARef.current.frictionStatic,
+      );
+      const Fae_B = findStaticFrictionForce(
+        massaRealB.current,
+        boxBRef.current.frictionStatic,
+      );
+      const Fae_C = findStaticFrictionForce(
+        massaRealC.current,
+        boxCRef.current.frictionStatic,
+      );
 
       // Só soma atrito de B e C se já colidiu
-      const somaAtritos = Fae_A
-        + (colisaoABRef.current ? Fae_B : 0)
-        + (colisaoBCRef.current ? Fae_C : 0);
-
+      /*const somaAtritos =
+        Fae_A +
+        (colisaoABRef.current ? Fae_B : 0) +
+        (colisaoBCRef.current ? Fae_C : 0);
+*/
       if (FORCA_INICIAL.current <= somaAtritos) {
-        Body.setVelocity(boxARef.current, { x: 0, y: 0 });
-        Body.setVelocity(boxBRef.current, { x: 0, y: 0 });
-        Body.setVelocity(boxCRef.current, { x: 0, y: 0 });
+        for (let i = 0; i < system1BlocksCount; i++) {
+          Body.setVelocity(allBoxesRef.current[i], { x: 0, y: 0 });
+        }
         return; // ← return faltava aqui
       }
 
       const deltaV = ACELERACAO_SISTEMA.current * SCALE;
 
-      Body.setVelocity(boxARef.current, {
-        x: boxARef.current.velocity.x + deltaV,
-        y: boxARef.current.velocity.y,
+      Body.setVelocity(allBoxesRef.current[0], {
+        x: allBoxesRef.current[0].velocity.x + deltaV,
+        y: allBoxesRef.current[0].velocity.y,
       });
     });
 
     Events.on(engine, "collisionStart", (event) => {
-      event.pairs.forEach((pair) => {
+      event.pairs.forEach((pair) => {     
         const { bodyA, bodyB } = pair;
 
-        const colisaoAB =
-          (bodyA === boxA && bodyB === boxB) ||
-          (bodyA === boxB && bodyB === boxA);
-        const colisaoBC =
-          (bodyA === boxB && bodyB === boxC) ||
-          (bodyA === boxC && bodyB === boxB);
+        if(bodyA.label === "ground" || bodyB.label === "ground") return;
 
-        if (colisaoAB && !colisaoABRef.current) {
-          colisaoABRef.current = true;
-          onColisaoABRef.current?.();
-        }
-        if (colisaoBC && !colisaoBCRef.current) {
-          colisaoBCRef.current = true;
-          onColisaoBCRef.current?.();
-        }
+        const newCollisionName = `colisao${bodyA.label}${bodyB.label}`;
+        const jaExiste = allCollisions.current.find(c => c.collisionName === newCollisionName);
+        if(jaExiste) return;
+
+        const hasCollided = true;
+        const newCollision = {
+          collisionName: newCollisionName,
+          hasCollided: hasCollided,
+        };
+
+        allCollisions.current.push(newCollision);
+        onCollisionsUpdateRef.current([...allCollisions.current]);
       });
     });
 
@@ -238,16 +306,16 @@ export const useBlocksScene = (
       Engine.clear(engine);
       render.canvas.remove();
     };
-  }, []);
+  }, [system1BlocksCount]);
 
   const drawForceOnBlock = (
     positionX: number,
     positionY: number,
-    boxWidth: number,
     forceText: string,
     arrowSize: number,
     colorArrow: string,
     isReverseArrow: boolean,
+    fontSize: number,
   ) => {
     const ctx = renderRef.current!.context;
     const leftSideOfBox = positionX;
@@ -280,18 +348,24 @@ export const useBlocksScene = (
       ctx.fill();
     }
 
-    ctx.font = "24px Arial";
+    ctx.font = `${fontSize}px Arial`;
     ctx.fillStyle = "black";
     ctx.fillText(forceText, leftSideOfBox + 35, arrowY - 15);
   };
 
   const resetPositionOfAllBlocks = () => {
+    if (!allBoxesRef.current) return;
     forcaRef.current = false;
-    colisaoABRef.current = false;
-    colisaoBCRef.current = false;
-    resetPosition(boxARef.current!, boxSettings[0].positionX);
-    resetPosition(boxBRef.current!, boxSettings[1].positionX);
-    resetPosition(boxCRef.current!, boxSettings[2].positionX);
+
+    for (let i = 0; i < system1BlocksCount; i++) {
+      if(allCollisions.current[i]) allCollisions.current[i].hasCollided = false;
+      resetPosition(
+        allBoxesRef.current[i],
+        i == 0
+          ? initialBoxXPosition
+          : allBoxesRef.current[i - 1].position.x + 80,
+      );
+    }
   };
 
   const resetPosition = (boxRef: Body, x_position: number) => {
@@ -338,7 +412,10 @@ export const useBlocksScene = (
     return coeficiente_atr * 10;
   };
 
-  const findStaticFrictionForce = (massa: number, coeficiente_atr_estatico: number) => {
+  const findStaticFrictionForce = (
+    massa: number,
+    coeficiente_atr_estatico: number,
+  ) => {
     return massa * 10 * coeficiente_atr_estatico;
   };
 
@@ -353,13 +430,17 @@ export const useBlocksScene = (
 
   const findForceA_B = (forca_atrito: number, massa: number) => {
     FORCA_A_EM_B.current =
-      -(massa * ACELERACAO_SISTEMA.current) + FORCA_INICIAL.current - forca_atrito;
+      -(massa * ACELERACAO_SISTEMA.current) +
+      FORCA_INICIAL.current -
+      forca_atrito;
     return FORCA_A_EM_B.current.toFixed(2);
   };
 
   const findForceB_C = (forca_atrito: number, massa: number) => {
     FORCA_B_EM_C.current =
-      -(massa * ACELERACAO_SISTEMA.current) + FORCA_A_EM_B.current - forca_atrito;
+      -(massa * ACELERACAO_SISTEMA.current) +
+      FORCA_A_EM_B.current -
+      forca_atrito;
     return FORCA_B_EM_C.current.toFixed(2);
   };
 
@@ -385,6 +466,22 @@ export const useBlocksScene = (
     return [boxARef, boxBRef, boxCRef];
   };
 
+  const getAllBoxes = () => {
+    return allBoxesRef.current
+  }
+
+  const getMassByLabel = (label: string) => {
+    if(!allBoxesRef.current) return 0;
+    const box = allBoxesRef.current.find(box => box.label === label)
+    if(box) return box.mass;
+    return 0;
+  } 
+
+  const getAllCollisions = () => {
+    if(!allCollisions.current) return [];
+    return allCollisions.current;
+  }
+
   return {
     resetPositionOfAllBlocks,
     applyForce,
@@ -401,5 +498,8 @@ export const useBlocksScene = (
     massaRealA,
     massaRealB,
     massaRealC,
+    getAllBoxes,
+    getMassByLabel,
+    getAllCollisions,
   };
 };
