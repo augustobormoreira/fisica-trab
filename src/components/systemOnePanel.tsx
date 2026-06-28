@@ -117,6 +117,13 @@ export default function SystemOnePanel({
               type="text"
               value={`${block.mass * 10 * block.frictionStatic} N`}
             />
+            <label>{`Força Atrito Dinâmico: ${block.label}`}</label>
+            <input
+              readOnly
+              className="w-full h-auto border-1 rounded-sm mb-2"
+              type="text"
+              value={`${block.mass * 10 * block.friction} N`}
+            />
           </div>
         );
       })}
