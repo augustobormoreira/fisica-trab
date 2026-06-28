@@ -93,7 +93,7 @@ export default function SystemOnePanel({
       <label className="mt-3">Aceleração(m/s²)</label>
       <input
         readOnly
-        className="w-full h-auto border-1 rounded-sm mt-2 mb-2"
+        className="w-full h-auto border-1 rounded-sm mt-2 mb-2 "
         value={currentAcceleration}
       />
       {blocks.map((block) => {
@@ -110,7 +110,7 @@ export default function SystemOnePanel({
               type="text"
               value={`${block.mass} KG`}
             />
-            <label>{`Força Atrito Cinético: ${block.label}`}</label>
+            <label>{`Força Atrito Estático: ${block.label}`}</label>
             <input
               readOnly
               className="w-full h-auto border-1 rounded-sm mb-2"
