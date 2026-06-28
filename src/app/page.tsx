@@ -116,7 +116,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="w-1/5 shrink-0 h-full border-l border-gray-300 flex flex-col items-start pt-4 px-4 gap-2">
+      <div className="w-1/5 shrink-0 h-full border-l border-gray-300 flex flex-col items-start pt-4 px-4 gap-2 overflow-y-auto min-w-0">
         {sistemaAtivo === "sistema1" && (
           <SystemOnePanel
             blocks={blocks}

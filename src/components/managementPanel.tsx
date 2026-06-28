@@ -31,22 +31,22 @@ export const ManagementPanel = ({
   };
 
   return (
-    <div className=" flex flex-col items-center w-90 h-auto">
-      <div className="flex flex-col w-auto h-10">
+    <div className=" flex flex-col items-center w-full h-auto gap-1">
+      <div className="flex flex-col w-full gap-1 justify-center items-center">
         <button
           onClick={() => setSistemaPainelEAtual("sistema1")}
-          className="w-50 h-auto font-serif border-1 rounded-xs border-gray-500 hover:text-white hover:bg-gray-500"
+          className="w-3/5 h-auto font-serif border-1 rounded-xs border-gray-500 hover:text-white hover:bg-gray-500"
         >
           Sub-Sistema 1
         </button>
         <button
           onClick={() => setSistemaPainelEAtual("sistema2")}
-          className="w-50 h-auto font-serif border-1 rounded-xs border-gray-500 hover:text-white hover:bg-gray-500"
+          className="w-3/5 h-auto font-serif border-1 rounded-xs border-gray-500 hover:text-white hover:bg-gray-500"
         >
           Sub-Sistema 2
         </button>
       </div>
-      <div className="flex flex-col justify-center items-center w-90 h-90">
+      <div className="flex flex-col justify-center items-center w-full h-auto mt-4">
         {sistemaAtual === "sistema1" && (
           <>
             <div className="flex flex-col items-center w-50 mt-3 gap-1">

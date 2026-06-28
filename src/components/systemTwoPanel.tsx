@@ -36,13 +36,13 @@ export default function SystemTwoPanel({
 
         return (
           <div
-            className="w-100 h-auto flex flex-col justify-between m-1"
+            className="w-full h-auto flex flex-col justify-between m-1"
             key={block.label}
           >
             <label>{`Massa: ${block.label}`}</label>
             <input
               readOnly
-              className="w-90 border-1 rounded-sm"
+              className="w-full border-1 rounded-sm"
               type="text"
               value={`${block.mass.toFixed(2)} KG`}
             />
@@ -51,7 +51,7 @@ export default function SystemTwoPanel({
                 <label>{`T(${getLetraAnterior(block.label)}${block.label}) = T(${block.label}${getLetraAnterior(block.label)})`}</label>
                 <input
                   readOnly
-                  className="w-90 border-1 rounded-sm"
+                  className="w-full border-1 rounded-sm"
                   type="text"
                   value={`${getTracao(blocks.indexOf(block)).toFixed(2)} N`}
                 />
@@ -63,7 +63,7 @@ export default function SystemTwoPanel({
       <label>Aceleração(m/s²)</label>
       <input
         readOnly
-        className="w-90 border-1 rounded-sm"
+        className="w-full border-1 rounded-sm"
         type="text"
         value={Math.abs(getAcceleration()).toFixed(2)}
       />

@@ -158,10 +158,6 @@ export const usePulleyNewScene = (
   useEffect(() => {
     if (!sceneRef.current) return;
 
-    const container = sceneRef.current;
-    const containerWidth = container.clientWidth || 1100;
-    const containerHeight = container.clientHeight || 800;
-
     const names = Array.from(
       { length: 1 + rightBlockCount },
       (_, i) => ALPHABET[i],
@@ -176,9 +172,13 @@ export const usePulleyNewScene = (
       gravity: { x: 0, y: 0 },
     });
 
+    const container = sceneRef.current;
+    const containerWidth = container.clientWidth || 1100;
+    const containerHeight = container.clientHeight || 800;
+
     const render = Render.create({
       element: container,
-      engine,
+      engine: engine,
       options: {
         width: containerWidth,
         height: containerHeight,
@@ -393,8 +393,11 @@ export const usePulleyNewScene = (
       const w = container.clientWidth;
       const h = container.clientHeight;
       if (w > 0 && h > 0) {
-        render.canvas.width = w;
-        render.canvas.height = h;
+        const dpr = window.devicePixelRatio || 1;
+        render.canvas.width = w * dpr;
+        render.canvas.height = h * dpr;
+        render.canvas.style.width = `${w}px`;
+        render.canvas.style.height = `${h}px`;
         render.options.width = w;
         render.options.height = h;
         Render.lookAt(render, {
@@ -415,86 +418,91 @@ export const usePulleyNewScene = (
     };
   }, [rightBlockCount]);
 
-
   const runningRef = useRef(false);
 
   const startForce = () => {
-  if (runningRef.current) return;
-  runningRef.current = true;
+    if (runningRef.current) return;
+    runningRef.current = true;
 
-  const massaEsquerda = leftBlockRef.current?.mass ?? leftBlockMass;
-  const massaDireita = rightBlocksRef.current?.reduce((acc, b) => acc + b.mass, 0) ?? rightBlockMass;
+    const massaEsquerda = leftBlockRef.current?.mass ?? leftBlockMass;
+    const massaDireita =
+      rightBlocksRef.current?.reduce((acc, b) => acc + b.mass, 0) ??
+      rightBlockMass;
 
-  if(massaEsquerda == massaDireita) return;
+    if (massaEsquerda == massaDireita) return;
 
-  let direction = "";
-  if (massaEsquerda < massaDireita) {
-    direction = "left";
-  } else {
-    direction = "right";
-  }
-
-  const loop = () => {
-    if (!runningRef.current) return;
-
-    
-    const aceleracao = Math.abs(getAcceleration());
-    
-    
-    const SCALE_MIN = 0.2;
-    const SCALE_MAX = 3;
-    const digit = SCALE_MIN + (aceleracao / 10) * (SCALE_MAX - SCALE_MIN);
-
-    if (direction === "left") {
-      leftRopeLengthRef.current -= digit;
-      initialRightRopeLengthRef.current += digit;
-
-      if (leftRopeLengthRef.current <= PULLEY_RADIUS) {
-        leftRopeLengthRef.current = PULLEY_RADIUS;
-        runningRef.current = false;
-        return;
-      }
+    let direction = "";
+    if (massaEsquerda < massaDireita) {
+      direction = "left";
+    } else {
+      direction = "right";
     }
 
-    if (direction === "right") {
-      leftRopeLengthRef.current += digit;
-      initialRightRopeLengthRef.current -= digit;
+    const loop = () => {
+      if (!runningRef.current) return;
 
-      if (initialRightRopeLengthRef.current <= PULLEY_RADIUS) {
-        initialRightRopeLengthRef.current = PULLEY_RADIUS;
-        runningRef.current = false;
-        return;
-      }
-    }
+      const aceleracao = Math.abs(getAcceleration());
 
-    if (leftBlockRef.current) {
-      Body.setPosition(leftBlockRef.current, {
-        x: PULLEY_LEFT_X,
-        y: PULLEY_Y + leftRopeLengthRef.current + BLOCK_A_X_AND_W / 2,
-      });
-    }
+      const SCALE_MIN = 0.2;
+      const SCALE_MAX = 3;
+      const digit = SCALE_MIN + (aceleracao / 10) * (SCALE_MAX - SCALE_MIN);
 
-    if (rightBlocksRef.current) {
-      for (let i = 0; i < rightBlockCount; i++) {
-        if (i == 0) {
-          Body.setPosition(rightBlocksRef.current[i], {
-            x: PULLEY_RIGHT_X,
-            y: PULLEY_Y + initialRightRopeLengthRef.current + BLOCK_RIGHT_X_AND_W / 2,
-          });
-        } else {
-          Body.setPosition(rightBlocksRef.current[i], {
-            x: PULLEY_RIGHT_X,
-            y: rightBlocksRef.current[i - 1].position.y + BLOCK_RIGHT_X_AND_W + BLOCK_RIGHT_X_AND_W / 2,
-          });
+      if (direction === "left") {
+        leftRopeLengthRef.current -= digit;
+        initialRightRopeLengthRef.current += digit;
+
+        if (leftRopeLengthRef.current <= PULLEY_RADIUS) {
+          leftRopeLengthRef.current = PULLEY_RADIUS;
+          runningRef.current = false;
+          return;
         }
       }
-    }
+
+      if (direction === "right") {
+        leftRopeLengthRef.current += digit;
+        initialRightRopeLengthRef.current -= digit;
+
+        if (initialRightRopeLengthRef.current <= PULLEY_RADIUS) {
+          initialRightRopeLengthRef.current = PULLEY_RADIUS;
+          runningRef.current = false;
+          return;
+        }
+      }
+
+      if (leftBlockRef.current) {
+        Body.setPosition(leftBlockRef.current, {
+          x: PULLEY_LEFT_X,
+          y: PULLEY_Y + leftRopeLengthRef.current + BLOCK_A_X_AND_W / 2,
+        });
+      }
+
+      if (rightBlocksRef.current) {
+        for (let i = 0; i < rightBlockCount; i++) {
+          if (i == 0) {
+            Body.setPosition(rightBlocksRef.current[i], {
+              x: PULLEY_RIGHT_X,
+              y:
+                PULLEY_Y +
+                initialRightRopeLengthRef.current +
+                BLOCK_RIGHT_X_AND_W / 2,
+            });
+          } else {
+            Body.setPosition(rightBlocksRef.current[i], {
+              x: PULLEY_RIGHT_X,
+              y:
+                rightBlocksRef.current[i - 1].position.y +
+                BLOCK_RIGHT_X_AND_W +
+                BLOCK_RIGHT_X_AND_W / 2,
+            });
+          }
+        }
+      }
+
+      requestAnimationFrame(loop);
+    };
 
     requestAnimationFrame(loop);
   };
-
-  requestAnimationFrame(loop);
-};
 
   const stopReducingLeftRope = () => {
     runningRef.current = false;
@@ -552,17 +560,17 @@ export const usePulleyNewScene = (
   };
 
   const setMassaBloco = (label: string, massa: number) => {
-    if(!leftBlockRef.current || !rightBlocksRef.current) return 0;
-    if(leftBlockRef.current.label===label){
+    if (!leftBlockRef.current || !rightBlocksRef.current) return 0;
+    if (leftBlockRef.current.label === label) {
       Body.setMass(leftBlockRef.current, massa);
-    }else {
-      for(let i = 0; i < rightBlockCount; i++) {
-        if(rightBlocksRef.current[i].label===label){
+    } else {
+      for (let i = 0; i < rightBlockCount; i++) {
+        if (rightBlocksRef.current[i].label === label) {
           Body.setMass(rightBlocksRef.current[i], massa);
         }
       }
     }
-  } 
+  };
 
   const disableMouse2 = () => {
     if (mouseConstraintRef.current) {

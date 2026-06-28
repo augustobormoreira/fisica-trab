@@ -84,12 +84,16 @@ export const useBlocksScene = (
 
     const engine = Engine.create();
 
+    const container = sceneRef.current;
+    const containerWidth = container.clientWidth || 1100;
+    const containerHeight = container.clientHeight || 800;
+
     const render = Render.create({
-      element: sceneRef!.current,
+      element: container,
       engine: engine,
       options: {
-        width: 1100,
-        height: 800,
+        width: containerWidth,
+        height: containerHeight,
         wireframes: false,
         background: "#ffffff",
       },
@@ -307,7 +311,27 @@ export const useBlocksScene = (
     const runner = Runner.create();
     Runner.run(runner, engine);
 
+    const observer = new ResizeObserver(() => {
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      if (w > 0 && h > 0) {
+        const dpr = window.devicePixelRatio || 1;
+        render.canvas.width = w * dpr;
+        render.canvas.height = h * dpr;
+        render.canvas.style.width = `${w}px`;
+        render.canvas.style.height = `${h}px`;
+        render.options.width = w;
+        render.options.height = h;
+        Render.lookAt(render, {
+          min: { x: 0, y: 0 },
+          max: { x: w, y: h },
+        });
+      }
+    });
+    observer.observe(container);
+
     return () => {
+      observer.disconnect();
       Render.stop(render);
       Runner.stop(runner);
       Composite.clear(engine.world, false);
