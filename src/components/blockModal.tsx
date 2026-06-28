@@ -6,17 +6,16 @@ export const BlockModal = ({
   body,
   onClose,
   onSave,
-  massaReal,
+  massa,
   system,
 }: {
   body: Matter.Body;
   onClose: () => void;
-  onSave?: (label: string, massaReal: number) => void;
-  massaReal?: number;
+  onSave?: (label: string, massa: number) => void;
+  massa?: number;
   system: Sistema;
 }) => {
-  // Controlar o valor do input localmente
-  const [massaInput, setMassaInput] = useState<number>(massaReal ?? 0);
+  const [massaInput, setMassaInput] = useState<number>(massa ?? 0);
 
   const handleMassChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
@@ -63,7 +62,13 @@ export const BlockModal = ({
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">
-      <div className="bg-white rounded-0lg shadow-xl p-6 w-80">
+      <div className="bg-white rounded-0lg shadow-xl p-6 w-80 relative">
+        <button
+          onClick={onClose}
+          className="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl font-bold"
+        >
+          X
+        </button>
         <h2 className="text-xl font-bold mb-4">{body.label}</h2>
 
         <label className="block text-sm mb-1">Massa (kg real)</label>

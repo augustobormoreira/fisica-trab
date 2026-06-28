@@ -147,6 +147,7 @@ export default function Home() {
             setSelectedBody(null);
             enableMouse2();
           }}
+          massa={selectedBody.mass}
         />
       )}
 
@@ -158,6 +159,7 @@ export default function Home() {
             setSelectedBody2(null);
             enableMouse();
           }}
+          massa={selectedBody2.mass}
         />
       )}
 
