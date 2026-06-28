@@ -54,6 +54,7 @@ export const useBlocksScene = (
   const initialBoxXPosition = 200;
   const initialBoxYPosition = 700;
   const BOX_W_AND_H = 50;
+  const forcasEntreBlocks = useRef<Map<string, number>>(new Map());
 
   const massaRealA = useRef<number>(40);
   const massaRealB = useRef<number>(10);
@@ -228,6 +229,24 @@ export const useBlocksScene = (
             );
           }
         }
+        for (let i = 1; i < system1BlocksCount; i++) {
+          const label = `${ALPHABET[i - 1]}${ALPHABET[i]}`;
+          const forca = forcasEntreBlocks.current.get(label);
+          if (forca !== undefined) {
+            const x = allBoxesRef.current[i].position.x;
+            const y = allBoxesRef.current[i].position.y - BOX_W_AND_H / 2 - 30;
+
+            ctx.font = "bold 12px Arial";
+            ctx.fillStyle = "blue";
+            ctx.textAlign = "center";
+
+            // Linha 1: F(ab)
+            ctx.fillText(`F(${label})`, x, y);
+
+            // Linha 2: valor da força
+            ctx.fillText(`${forca.toFixed(0)}N`, x, y + 15);
+          }
+        }
       }
     });
 
@@ -235,40 +254,30 @@ export const useBlocksScene = (
       if (!forcaRef.current) return;
       if (!allBoxesRef.current) return;
 
-      // 1. O Bloco A SEMPRE tem seu atrito estático considerado,
-      // pois a força está sendo aplicada diretamente nele.
       const blocoA = allBoxesRef.current[0];
       let somaAtritos = blocoA.mass * 10 * blocoA.frictionStatic;
 
-      // 2. Somamos o atrito dos blocos seguintes (B, C...) APENAS se eles já colidiram
       for (let i = 1; i < system1BlocksCount; i++) {
         const blocoAnterior = allBoxesRef.current[i - 1];
         const blocoAtual = allBoxesRef.current[i];
 
-        // Buscamos se existe uma colisão registrada entre o bloco anterior e o atual
-        // Ex: "colisaoAB" para i = 1, "colisaoBC" para i = 2
         const nomeColisao = `colisao${blocoAnterior.label}${blocoAtual.label}`;
         const colisaoExiste = allCollisions.current.find(
           (c) => c.collisionName === nomeColisao,
         );
 
         if (colisaoExiste) {
-          // Se colidiu, o atrito estático deste bloco entra na resistência total do sistema
           somaAtritos += blocoAtual.mass * 10 * blocoAtual.frictionStatic;
         }
       }
 
-      // 3. Verificação resultante: se a força não supera o atrito acumulado dos blocos em contato
       if (FORCA_INICIAL.current <= somaAtritos) {
-        // Zera a velocidade de todos os blocos para simular que o sistema travou/não moveu
         for (let i = 0; i < system1BlocksCount; i++) {
           Body.setVelocity(allBoxesRef.current[i], { x: 0, y: 0 });
         }
         return;
       }
 
-      // 4. Se a força for maior que o atrito ativo atual, apenas o Bloco A recebe o empurrão inicial
-      // O Matter.js se encarrega de transmitir o impacto de forma física e natural para os outros blocos.
       const deltaV = ACELERACAO_SISTEMA.current * SCALE;
 
       Body.setVelocity(blocoA, {
@@ -451,13 +460,6 @@ export const useBlocksScene = (
     return coeficiente_atr * 10;
   };
 
-  const findStaticFrictionForce = (
-    massa: number,
-    coeficiente_atr_estatico: number,
-  ) => {
-    return massa * 10 * coeficiente_atr_estatico;
-  };
-
   const findAcceleration = (
     forca_F: number,
     soma_forca_atritos: number,
@@ -528,6 +530,10 @@ export const useBlocksScene = (
     return allCollisions.current;
   };
 
+  const setForcasEntreBlocos = (label: string, valor: number) => {
+    forcasEntreBlocks.current.set(label, valor);
+  };
+
   return {
     resetPositionOfAllBlocks,
     applyForce,
@@ -547,5 +553,6 @@ export const useBlocksScene = (
     getAllBoxes,
     getMassByLabel,
     getAllCollisions,
+    setForcasEntreBlocos,
   };
 };

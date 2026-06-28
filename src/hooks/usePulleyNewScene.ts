@@ -158,6 +158,10 @@ export const usePulleyNewScene = (
   useEffect(() => {
     if (!sceneRef.current) return;
 
+    leftRopeLengthRef.current = LEFT_ROPE_INITIAL_LENGTH;
+    initialRightRopeLengthRef.current = RIGHT_ROPE_INITIAL_LENGTH;
+    runningRef.current = false;
+
     const names = Array.from(
       { length: 1 + rightBlockCount },
       (_, i) => ALPHABET[i],

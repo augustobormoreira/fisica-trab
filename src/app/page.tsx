@@ -46,6 +46,7 @@ export default function Home() {
     setMassa,
     getAllBoxes,
     getMassByLabel,
+    setForcasEntreBlocos,
   } = useBlocksScene(
     sceneRef1,
     handleBlockClick,
@@ -127,6 +128,7 @@ export default function Home() {
             systemReset={systemReset}
             collisions={collisions}
             getMassByLabel={getMassByLabel}
+            setForcasEntreBlocos={setForcasEntreBlocos}
           />
         )}
 
