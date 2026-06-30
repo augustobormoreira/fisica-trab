@@ -2,6 +2,7 @@
 import { Sistema } from "@/types";
 import { useState } from "react";
 
+//Painel de gerenciamento dos sistemas, o que fica na esquerda
 export const ManagementPanel = ({
   resetPositionOfAllBlocks,
   onSistemaChange,
@@ -23,8 +24,10 @@ export const ManagementPanel = ({
   setRightBlockCount: (rightBlockCount: number) => void;
   setSystem1BlockCount: (val: number) => void;
 }) => {
+  //state de controle para saber qual o sistema atual pra carregar opções de configuração baseados em cada um
   const [sistemaAtual, setSistema] = useState<Sistema>("sistema1");
 
+  //Callback recebida para poder setar qual sistema deve ser exibido na dom
   const setSistemaPainelEAtual = (sistema: Sistema) => {
     setSistema(sistema);
     onSistemaChange(sistema);
@@ -47,6 +50,7 @@ export const ManagementPanel = ({
         </button>
       </div>
       <div className="flex flex-col justify-center items-center w-full h-auto mt-4">
+        {/* Carrega opções de configuração do sistema 1 */}
         {sistemaAtual === "sistema1" && (
           <>
             <div className="flex flex-col items-center w-50 mt-3 gap-1">
@@ -109,6 +113,7 @@ export const ManagementPanel = ({
             </button>
           </>
         )}
+        {/* Carrega opções de configuração do sistema 2 */}
         {sistemaAtual === "sistema2" && (
           <>
             <div className="flex flex-col items-center w-50 mt-3 gap-1">

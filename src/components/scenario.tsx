@@ -2,6 +2,7 @@
 
 import { RefObject } from "react";
 
+//Componente responsável por exibir os sistemas
 export const Scenario = ({
   sceneRef,
 }: {

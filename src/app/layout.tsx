@@ -17,7 +17,8 @@ export default function RootLayout({
     // h-full no html e body para propagar altura até o main
     <html className="h-full">
       <body className="h-full flex flex-col">
-        <Navbar />
+        <Navbar />{" "}
+        {/* componente navbar fora do children pois nunca vai ser alterado */}
         {/* flex-1 + overflow-hidden garante que o main ocupe o restante sem scroll */}
         <main className="flex-1 overflow-hidden">{children}</main>
       </body>

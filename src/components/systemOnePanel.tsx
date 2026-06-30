@@ -1,14 +1,14 @@
 import { Collision } from "@/types/collision";
 import { Body } from "matter-js";
-import { RefObject, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
+//Painel de informações do sistema 1
 export default function SystemOnePanel({
   blocks,
   findAcceleration,
   setForcaInicial,
   applyForce,
   startSystem,
-  systemReset,
   collisions,
   setForcasEntreBlocos,
 }: {
@@ -24,6 +24,8 @@ export default function SystemOnePanel({
 }) {
   const initialForceRef = useRef<number>(0);
   const [initialForceInput, setInitialForce] = useState<number>(0);
+
+  //state de controle de caso o sistema estiver em movimento mostrar algumas informações
   useEffect(() => {
     if (!startSystem) return;
     if (initialForceRef.current === 0) return;
@@ -33,6 +35,7 @@ export default function SystemOnePanel({
   let somaAtritos = 0;
   let somaMassas = 0;
 
+  //Preenche a soma de forças de atrito e de massas apenas se existe aquela colisão entre aqueles dois blocos
   if (blocks.length > 0) {
     somaAtritos += blocks[0].friction * 10 * blocks[0].mass;
     somaMassas += blocks[0].mass;
@@ -51,10 +54,13 @@ export default function SystemOnePanel({
     }
   }
 
+  //Calcula a aceleração apenas se o sistema estiver começado
   const currentAcceleration = startSystem
     ? findAcceleration(initialForceRef.current, somaAtritos, somaMassas)
     : "0";
 
+    //Calcula as forças entre os blocos(força q a faz em b e etc)
+    //e usa callbacks para poder desenhar elas em cima dos blocos no sistema 1
   const forcasCalculadas: number[] = [];
   const forcasEntreBlocos = collisions.map((collision, index) => {
     const labels = collision.collisionName.replace("colisao", "");
@@ -96,6 +102,7 @@ export default function SystemOnePanel({
         className="w-full h-auto border-1 rounded-sm mt-2 mb-2 "
         value={currentAcceleration}
       />
+      {/* Cria os inputs readonly a cada render "ouvindo" a mudança de estado dos blocks */}
       {blocks.map((block) => {
         if (!block) return null;
         return (

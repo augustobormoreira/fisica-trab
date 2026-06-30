@@ -1,6 +1,8 @@
 import { Sistema } from "@/types";
 import { useState } from "react";
 
+//Esse modal é responsável por configurar os blocos de acordo com a opção clicada pelo usuário
+//Os 3 botões PA, PG e Randomizar
 export default function AlternateOptions({
   label,
   onClose,
@@ -12,14 +14,16 @@ export default function AlternateOptions({
   onClose: () => void;
   setMassa: (label: string, valor: number) => void;
   system: Sistema;
-  rightBlockCount: number,
+  rightBlockCount: number;
 }) {
-  const alphabet = ["A", "B", "C", "D", "E", "F", "G", "H", "I"]
+  const alphabet = ["A", "B", "C", "D", "E", "F", "G", "H", "I"];
+  //States usados para calcular a configuração baseada nos numeros informados pelo usuario
   const [numeroInicial, setNumeroInicial] = useState<number>(0);
   const [razao, setRazao] = useState<number>(0);
   const [menor, setMenor] = useState<number>(0);
   const [maior, setMaior] = useState<number>(0);
 
+  //Chama a função necessária de acordo com o tipo do sistema
   const setMassasDeAcordoComSistema = (label: string) => {
     if (system == "sistema1") {
       setMassasDeAcordoComLabelSistema1(label);
@@ -28,79 +32,87 @@ export default function AlternateOptions({
     }
   };
 
+  //Configura as massas do sistema 1 de acordo com a opção clicada
   const setMassasDeAcordoComLabelSistema1 = (label: string) => {
-    const index = Math.random() < 0.5 ? rightBlockCount-1 : 0
+    const index = Math.random() < 0.5 ? rightBlockCount - 1 : 0;
     if (label === "PG") {
-      if(index==rightBlockCount-1){
+      if (index == rightBlockCount - 1) {
         let cont = 0;
-        for(let i = index; i >= 0; i--){
-          setMassa(alphabet[i], numeroInicial * (razao ** (cont++)));
+        for (let i = index; i >= 0; i--) {
+          setMassa(alphabet[i], numeroInicial * razao ** cont++);
         }
       }
-      if(index==0){
+      if (index == 0) {
         let cont = 0;
-        for(let i = index; i <= rightBlockCount; i++){
-          setMassa(alphabet[i], numeroInicial * (razao ** (cont++)));
+        for (let i = index; i <= rightBlockCount; i++) {
+          setMassa(alphabet[i], numeroInicial * razao ** cont++);
         }
       }
     }
     if (label === "PA") {
-      if(index==rightBlockCount-1){
+      if (index == rightBlockCount - 1) {
         let cont = 0;
-        for(let i = index; i >= 0; i--){
-          setMassa(alphabet[i], numeroInicial + (razao * (cont++)));
+        for (let i = index; i >= 0; i--) {
+          setMassa(alphabet[i], numeroInicial + razao * cont++);
         }
       }
-      if(index==0){
+      if (index == 0) {
         let cont = 0;
-        for(let i = index; i <= rightBlockCount; i++){
-          setMassa(alphabet[i], numeroInicial + (razao * (cont++)));
+        for (let i = index; i <= rightBlockCount; i++) {
+          setMassa(alphabet[i], numeroInicial + razao * cont++);
         }
       }
     }
     if (label === "AR") {
-      for(let i = 0; i < rightBlockCount; i++) {
-        setMassa(alphabet[i], Math.floor(Math.random() * (maior - menor + 1)) + menor)
+      for (let i = 0; i < rightBlockCount; i++) {
+        setMassa(
+          alphabet[i],
+          Math.floor(Math.random() * (maior - menor + 1)) + menor,
+        );
       }
     }
   };
 
+  //Configura as massas do sistema 2 de acordo com a opção clicada
   const setMassasDeAcordoComLabelSistema2 = (label: string) => {
-    const index = Math.random() < 0.5 ? rightBlockCount-1 : 0
+    const index = Math.random() < 0.5 ? rightBlockCount - 1 : 0;
     if (label === "PG") {
-      if(index==rightBlockCount-1){
+      if (index == rightBlockCount - 1) {
         let cont = 0;
-        for(let i = index; i >= 0; i--){
-          setMassa(alphabet[i+1], numeroInicial * (razao ** (cont++)));
+        for (let i = index; i >= 0; i--) {
+          setMassa(alphabet[i + 1], numeroInicial * razao ** cont++);
         }
       }
-      if(index==0){
+      if (index == 0) {
         let cont = 0;
-        for(let i = index; i <= rightBlockCount; i++){
-          setMassa(alphabet[i+1], numeroInicial * (razao ** (cont++)));
+        for (let i = index; i <= rightBlockCount; i++) {
+          setMassa(alphabet[i + 1], numeroInicial * razao ** cont++);
         }
       }
     }
     if (label === "PA") {
-      if(index==rightBlockCount-1){
+      if (index == rightBlockCount - 1) {
         let cont = 0;
-        for(let i = index; i >= 0; i--){
-          setMassa(alphabet[i+1], numeroInicial + (razao * (cont++)));
+        for (let i = index; i >= 0; i--) {
+          setMassa(alphabet[i + 1], numeroInicial + razao * cont++);
         }
       }
-      if(index==0){
+      if (index == 0) {
         let cont = 0;
-        for(let i = index; i <= rightBlockCount; i++){
-          setMassa(alphabet[i+1], numeroInicial + (razao * (cont++)));
+        for (let i = index; i <= rightBlockCount; i++) {
+          setMassa(alphabet[i + 1], numeroInicial + razao * cont++);
         }
       }
     }
     if (label === "AR") {
-      for(let i = 0; i < rightBlockCount; i++) {
-        setMassa(alphabet[i+1], Math.floor(Math.random() * (maior - menor + 1)) + menor)
+      for (let i = 0; i < rightBlockCount; i++) {
+        setMassa(
+          alphabet[i + 1],
+          Math.floor(Math.random() * (maior - menor + 1)) + menor,
+        );
       }
     }
-  }
+  };
 
   return (
     <div className="fixed inset-0 flex items-center justify-center z-50">

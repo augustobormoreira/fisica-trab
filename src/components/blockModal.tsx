@@ -2,6 +2,7 @@ import { Sistema } from "@/types";
 import { Body } from "matter-js";
 import { useState } from "react";
 
+//Modal pra configurar os dados de um bloco
 export const BlockModal = ({
   body,
   onClose,
@@ -15,8 +16,10 @@ export const BlockModal = ({
   massa?: number;
   system: Sistema;
 }) => {
+  //state pra informar a massa para o usuário e também receber sua alteração
   const [massaInput, setMassaInput] = useState<number>(massa ?? 0);
 
+  //Função responsável por lidar com a alteração da massa informada no input
   const handleMassChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = Number(e.target.value);
     setMassaInput(val);
@@ -25,16 +28,19 @@ export const BlockModal = ({
     }
   };
 
+  //Função responsável por lidar com a alteração do atrito dinâmico informado no input
   const handleFrictionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     body.friction = Number(e.target.value);
   };
 
+  //Função responsável por lidar com a alteração do atrito estático informado no input
   const handleStaticFrictionChange = (
     e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     Body.set(body, "frictionStatic", Number(e.target.value));
   };
 
+  //Função pra verificar se a massa informada é 0 ou negativo, pois o matter-js encara essas massas como o bloco não existindo
   const performNegativeOrZeroCheckOnSystem1 = () => {
     if (massaInput < 0) {
       alert("Massa não pode ser negativa!");
@@ -48,6 +54,7 @@ export const BlockModal = ({
     }
   };
 
+  //Função pra verificar se a massa informada é 0 ou negativo, pois o matter-js encara essas massas como o bloco não existindo
   const performNegativeOrZeroCheckOnSystem2 = () => {
     if (massaInput < 0) {
       alert("Massa não pode ser negativa!");
@@ -79,6 +86,7 @@ export const BlockModal = ({
           className="border rounded w-full px-2 py-1 mb-4"
         />
 
+        {/* Se for o sistema 1 carrega as informações dos atritos dos blocos */}
         {system === "sistema1" && (
           <>
             <label className="block text-sm mb-1">Atrito Dinâmico</label>

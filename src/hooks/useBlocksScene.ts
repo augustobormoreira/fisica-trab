@@ -13,14 +13,8 @@ import {
 import { useEffect, useRef } from "react";
 import { Collision } from "@/types/collision";
 
-const boxSettings = [
-  { positionX: 200, positionY: 700, width: 200, height: 200 },
-  { positionX: 550, positionY: 700, width: 100, height: 100 },
-  { positionX: 670, positionY: 700, width: 50, height: 50 },
-];
 
-const ALPHABET = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
-
+//função para desenhar os nomes dos blocos em seus centros
 const nameBlocks = (
   ctx: CanvasRenderingContext2D,
   positionX: number,
@@ -41,9 +35,6 @@ export const useBlocksScene = (
   system1BlocksCount: number,
 ) => {
   const forcaRef = useRef(false);
-  const boxARef = useRef<Body>(null);
-  const boxBRef = useRef<Body>(null);
-  const boxCRef = useRef<Body>(null);
   const allBoxesRef = useRef<Body[]>([]);
   const allCollisions = useRef<Collision[]>([]);
   const onCollisionsUpdateRef = useRef(onCollisionsUpdate);
@@ -56,19 +47,11 @@ export const useBlocksScene = (
   const BOX_W_AND_H = 50;
   const forcasEntreBlocks = useRef<Map<string, number>>(new Map());
 
-  const massaRealA = useRef<number>(40);
-  const massaRealB = useRef<number>(10);
-  const massaRealC = useRef<number>(90);
-
   const SCALE = 0.002;
   const FORCA_INICIAL = useRef<number>(0);
   const ACELERACAO_SISTEMA = useRef<number>(0);
-  const FORCA_A_EM_B = useRef<number>(0);
-  const FORCA_B_EM_C = useRef<number>(0);
-  const FORCA_ATR_A = useRef<number>(0);
-  const FORCA_ATR_B = useRef<number>(0);
-  const FORCA_ATR_C = useRef<number>(0);
 
+  //useeffects para atualizar referencias de callbacks fornecidos pelo page
   useEffect(() => {
     onBlockClickRef.current = onBlockClickOpenConfiguration;
   }, [onBlockClickOpenConfiguration]);
@@ -79,16 +62,19 @@ export const useBlocksScene = (
 
   useEffect(() => {
     if (!sceneRef.current) return;
+    //reset de cache de memória em alguns refs para ter certeza que nada seja criado duas vezes
     allBoxesRef.current = [];
     allCollisions.current = [];
     onCollisionsUpdateRef.current([]);
 
+    
+    //configurações do matter-js
     const engine = Engine.create();
-
     const container = sceneRef.current;
     const containerWidth = container.clientWidth || 1100;
     const containerHeight = container.clientHeight || 800;
 
+    //configurações do matter-js
     const render = Render.create({
       element: container,
       engine: engine,
@@ -101,6 +87,7 @@ export const useBlocksScene = (
     });
     renderRef.current = render;
 
+    //criação de todos os blocos do sistema baseado no state(do page.tsx) de quantidade de blocos
     for (let i = 0; i < system1BlocksCount; i++) {
       const newBody = Bodies.rectangle(
         i == 0
@@ -122,52 +109,20 @@ export const useBlocksScene = (
       allBoxesRef.current.push(newBody);
     }
 
-    const boxA = Bodies.rectangle(
-      boxSettings[0].positionX,
-      boxSettings[0].positionY,
-      boxSettings[0].width,
-      boxSettings[0].height,
-      {
-        label: "A",
-        render: { fillStyle: "#FFF", strokeStyle: "#000", lineWidth: 1 },
-      },
-    );
-    const boxB = Bodies.rectangle(
-      boxSettings[1].positionX,
-      boxSettings[1].positionY,
-      boxSettings[1].width,
-      boxSettings[1].height,
-      {
-        label: "B",
-        render: { fillStyle: "#FFF", strokeStyle: "#000", lineWidth: 1 },
-      },
-    );
-    const boxC = Bodies.rectangle(
-      boxSettings[2].positionX,
-      boxSettings[2].positionY,
-      boxSettings[2].width,
-      boxSettings[2].height,
-      {
-        label: "C",
-        render: { fillStyle: "#FFF", strokeStyle: "#000", lineWidth: 1 },
-      },
-    );
-
-    boxARef.current = boxA;
-    boxBRef.current = boxB;
-    boxCRef.current = boxC;
-
+    //criação do retangulo preto no sistema 1 que atua como chão
     const ground = Bodies.rectangle(550, 710, 1000, 60, {
       isStatic: true,
       label: "ground",
     });
 
+    //configuração necessária do matter-js
     const mouse = Mouse.create(render.canvas);
     const mouseConstraint = MouseConstraint.create(engine, { mouse });
     mouseConstraintRef.current = mouseConstraint;
     Composite.add(engine.world, mouseConstraint);
     Composite.add(engine.world, [...allBoxesRef.current, ground]);
 
+    //evento apos cada renderização do canvas pra poder desenhar as forças nos blocos
     Events.on(render, "afterRender", () => {
       const ctx = render.context;
 
@@ -250,6 +205,7 @@ export const useBlocksScene = (
       }
     });
 
+    //evento de update a cada frame pra atualizar posições de blocos, velocidades e aceleração
     Events.on(engine, "afterUpdate", () => {
       if (!forcaRef.current) return;
       if (!allBoxesRef.current) return;
@@ -286,6 +242,7 @@ export const useBlocksScene = (
       });
     });
 
+    //evento de colisão de dois blocos pra registrar quais dois blocos colidiram
     Events.on(engine, "collisionStart", (event) => {
       event.pairs.forEach((pair) => {
         const { bodyA, bodyB } = pair;
@@ -309,6 +266,7 @@ export const useBlocksScene = (
       });
     });
 
+    //evento de clique do mouse pra poder desabilitar ele ao clicar em um bloco
     Events.on(mouseConstraint, "mousedown", (event) => {
       const clickedBody = event.source.body;
       if (clickedBody && !clickedBody.isStatic) {
@@ -316,10 +274,12 @@ export const useBlocksScene = (
       }
     });
 
+    //configurações necessárias do matter-js
     Render.run(render);
     const runner = Runner.create();
     Runner.run(runner, engine);
 
+    //configurações necessárias do matter-js
     const observer = new ResizeObserver(() => {
       const w = container.clientWidth;
       const h = container.clientHeight;
@@ -339,6 +299,7 @@ export const useBlocksScene = (
     });
     observer.observe(container);
 
+    //configurações necessárias do matter-js
     return () => {
       observer.disconnect();
       Render.stop(render);
@@ -349,6 +310,7 @@ export const useBlocksScene = (
     };
   }, [system1BlocksCount]);
 
+  //função pra desenhar as flechas das forças nos blocos
   const drawForceOnBlock = (
     positionX: number,
     positionY: number,
@@ -394,12 +356,14 @@ export const useBlocksScene = (
     ctx.fillText(forceText, leftSideOfBox + 35, arrowY - 15);
   };
 
+  //função pra resetar a posição de todos os blocos
   const resetPositionOfAllBlocks = () => {
     if (!allBoxesRef.current) return;
     forcaRef.current = false;
 
     allCollisions.current = [];
     onCollisionsUpdateRef.current([]);
+    forcasEntreBlocks.current.clear();
 
     for (let i = 0; i < system1BlocksCount; i++) {
       const novaPosicaoX = initialBoxXPosition + i * 80;
@@ -416,79 +380,51 @@ export const useBlocksScene = (
     }
   };
 
-  const resetPosition = (boxRef: Body, x_position: number) => {
-    Body.setVelocity(boxRef, { x: 0, y: 0 });
-    Body.setAngularVelocity(boxRef, 0);
-    Body.setPosition(boxRef, { x: x_position, y: 700 });
-  };
-
+  //função pra setar o movimento do sistema para verdadeiro
   const applyForce = () => {
     forcaRef.current = true;
   };
 
+  //função pra desativar o mouse
   const disableMouse = () => {
     if (mouseConstraintRef.current) {
       mouseConstraintRef.current.constraint.stiffness = 0;
       mouseConstraintRef.current.mouse.button = -1;
     }
   };
-
+  
+  //função pra reativar o mouse
   const enableMouse = () => {
     if (mouseConstraintRef.current) {
       mouseConstraintRef.current.constraint.stiffness = 0.2;
     }
   };
 
-  // Usa massa REAL para calcular atrito para exibição no painel
-  const findFrictionForce = (
-    block_name: string,
-    coeficiente_atr: number,
-    _forca_peso: number, // ignorado — usamos massa real * g
-  ) => {
-    if (block_name === "A") {
-      FORCA_ATR_A.current = coeficiente_atr * massaRealA.current * 10;
-      return FORCA_ATR_A.current;
-    }
-    if (block_name === "B") {
-      FORCA_ATR_B.current = coeficiente_atr * massaRealB.current * 10;
-      return FORCA_ATR_B.current;
-    }
-    if (block_name === "C") {
-      FORCA_ATR_C.current = coeficiente_atr * massaRealC.current * 10;
-      return FORCA_ATR_C.current;
-    }
-    return coeficiente_atr * 10;
-  };
-
+  //função pra achar a aceleração do sistema
   const findAcceleration = (
     forca_F: number,
     soma_forca_atritos: number,
     soma_massas: number,
   ) => {
     ACELERACAO_SISTEMA.current = (forca_F - soma_forca_atritos) / soma_massas;
+    console.log(ACELERACAO_SISTEMA.current);
     return ACELERACAO_SISTEMA.current.toFixed(2);
   };
 
-  const findForceA_B = (forca_atrito: number, massa: number) => {
-    FORCA_A_EM_B.current =
-      -(massa * ACELERACAO_SISTEMA.current) +
-      FORCA_INICIAL.current -
+  //função pra achar a força exercida em um bloco
+  const findForceX_Y = (forca_atrito: number, massa: number) => {
+    const forcaX_Y =
+      -(massa * ACELERACAO_SISTEMA.current) -
       forca_atrito;
-    return FORCA_A_EM_B.current.toFixed(2);
+    return forcaX_Y.toFixed(2);
   };
 
-  const findForceB_C = (forca_atrito: number, massa: number) => {
-    FORCA_B_EM_C.current =
-      -(massa * ACELERACAO_SISTEMA.current) +
-      FORCA_A_EM_B.current -
-      forca_atrito;
-    return FORCA_B_EM_C.current.toFixed(2);
-  };
-
+  //função pra ajustar a ref da força inicial
   const setForcaInicial = (valor_f: number) => {
     FORCA_INICIAL.current = valor_f;
   };
 
+  //função pra setar a massa de um determinado bloco
   const setMassa = (label: string, massa: number) => {
     const foundBody = allBoxesRef.current.find((box) => box.label === label);
     if (foundBody) {
@@ -496,28 +432,12 @@ export const useBlocksScene = (
     }
   };
 
-  // Setter para o BlockModal atualizar a massa real
-  const setMassaReal = (label: string, valor: number) => {
-    if (label === "A") massaRealA.current = valor;
-    if (label === "B") massaRealB.current = valor;
-    if (label === "C") massaRealC.current = valor;
-  };
-
-  const getMassaReal = (label: string) => {
-    if (label === "A") return massaRealA.current;
-    if (label === "B") return massaRealB.current;
-    if (label === "C") return massaRealC.current;
-    return 0;
-  };
-
-  const getBlocksAsArray = () => {
-    return [boxARef, boxBRef, boxCRef];
-  };
-
+  //função pra pegar todos os blocos existentes
   const getAllBoxes = () => {
     return allBoxesRef.current;
   };
 
+  //função pra pegar a massa de um bloco específico
   const getMassByLabel = (label: string) => {
     if (!allBoxesRef.current) return 0;
     const box = allBoxesRef.current.find((box) => box.label === label);
@@ -525,11 +445,14 @@ export const useBlocksScene = (
     return 0;
   };
 
+
+  //função pra pegar todas as colisões 
   const getAllCollisions = () => {
     if (!allCollisions.current) return [];
     return allCollisions.current;
   };
 
+  //função pra adicionar uma uma nova força entre blocos
   const setForcasEntreBlocos = (label: string, valor: number) => {
     forcasEntreBlocks.current.set(label, valor);
   };
@@ -537,19 +460,12 @@ export const useBlocksScene = (
   return {
     resetPositionOfAllBlocks,
     applyForce,
-    getBlocksAsArray,
     disableMouse,
     enableMouse,
     findAcceleration,
-    findFrictionForce,
     setForcaInicial,
-    findForceA_B,
-    findForceB_C,
+    findForceX_Y,
     setMassa,
-    getMassaReal,
-    massaRealA,
-    massaRealB,
-    massaRealC,
     getAllBoxes,
     getMassByLabel,
     getAllCollisions,

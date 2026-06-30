@@ -1,3 +1,5 @@
+
+//Componente navbar
 export const Navbar = () => {
     return (
         <div className="w-full h-15 bg-gradient-to-r from-gray-400 to-white border-b-4 border-solid border-gray-400 flex justify-center items-center">

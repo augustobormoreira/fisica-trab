@@ -7,7 +7,6 @@ import {
   Body,
   Composite,
   Events,
-  Constraint,
 } from "matter-js";
 import Matter from "matter-js";
 
@@ -23,6 +22,7 @@ const RIGHT_ROPE_INITIAL_LENGTH = 200;
 const BLOCK_A_X_AND_W = 100;
 const BLOCK_RIGHT_X_AND_W = 30;
 
+//função pra desenhar uma força num bloco(as flechas)
 const drawForceOnBlock = (
   ctx: CanvasRenderingContext2D,
   positionX: number,
@@ -83,6 +83,7 @@ const drawForceOnBlock = (
   );
 };
 
+//função pra desenhar as linhas do sistema 2, as que puxam pra cima ou pra baixo
 const drawRope = (
   ctx: CanvasRenderingContext2D,
   fromX: number,
@@ -98,6 +99,7 @@ const drawRope = (
   ctx.stroke();
 };
 
+//função pra criar um bloco
 const createBlock = (
   block_x_position: number,
   block_y_position: number,
@@ -118,6 +120,7 @@ const createBlock = (
   );
 };
 
+//função pra desenhar o nome dos blocos em seus centros
 const nameBlocks = (
   ctx: CanvasRenderingContext2D,
   positionX: number,
@@ -151,35 +154,36 @@ export const usePulleyNewScene = (
   const onBlockClickRef = useRef(onBlockClick);
   const mouseConstraintRef = useRef<Matter.MouseConstraint>(null);
 
+  //useeffect pra lidar com a callback de click em blocos
   useEffect(() => {
     onBlockClickRef.current = onBlockClick;
   }, [onBlockClick]);
 
   useEffect(() => {
     if (!sceneRef.current) return;
-
+    
+    //reset de cache de alguns refs que podem acabar gerando duplicatas
     leftRopeLengthRef.current = LEFT_ROPE_INITIAL_LENGTH;
     initialRightRopeLengthRef.current = RIGHT_ROPE_INITIAL_LENGTH;
     runningRef.current = false;
 
+    //array de nomes dos arrays, é o alfabeto
     const names = Array.from(
       { length: 1 + rightBlockCount },
       (_, i) => ALPHABET[i],
     );
-    const rightTotalMass = rightBlockMass * rightBlockCount;
 
-    massesRef.current = [
-      rightTotalMass + 1,
-      ...Array(rightBlockCount).fill(rightBlockMass),
-    ];
+    //configuração necessária do matter-js
     const engine = Engine.create({
       gravity: { x: 0, y: 0 },
     });
 
+    //configuração necessária do matter-js
     const container = sceneRef.current;
     const containerWidth = container.clientWidth || 1100;
     const containerHeight = container.clientHeight || 800;
 
+    //configuração necessária do matter-js
     const render = Render.create({
       element: container,
       engine: engine,
@@ -192,11 +196,12 @@ export const usePulleyNewScene = (
     });
     renderRef.current = render;
 
+    //configuração necessária do matter-js
     const mouse = Matter.Mouse.create(render.canvas);
     const mouseConstraint = Matter.MouseConstraint.create(engine, { mouse });
     mouseConstraintRef.current = mouseConstraint;
 
-    // Block A
+    // criação do bloco A
     const blockA = createBlock(
       PULLEY_LEFT_X,
       LEFT_BLOCK_INITIAL_Y + BLOCK_A_X_AND_W / 2,
@@ -206,7 +211,7 @@ export const usePulleyNewScene = (
     );
     leftBlockRef.current = blockA;
 
-    // Right Blocks
+    // criação dos blocos da direita
     const rightBlocks: Body[] = [];
     for (let i = 0; i < rightBlockCount; i++) {
       if (i === 0) {
@@ -233,6 +238,7 @@ export const usePulleyNewScene = (
     }
     rightBlocksRef.current = rightBlocks;
 
+    //criação das duas polias e da barra que as conecta
     const pulleyLeft = Bodies.circle(PULLEY_LEFT_X, PULLEY_Y, PULLEY_RADIUS, {
       isStatic: true,
       render: { fillStyle: "#aaa", strokeStyle: "#000", lineWidth: 2 },
@@ -252,6 +258,7 @@ export const usePulleyNewScene = (
       },
     );
 
+    //configuração necessária do matter-js
     Composite.add(engine.world, [
       pulleyLeft,
       pulleyRight,
@@ -261,6 +268,7 @@ export const usePulleyNewScene = (
       mouseConstraint,
     ]);
 
+    //evento de clique do mouse para poder lidar com ele ser desabilitado e configuração do bloco clicado
     Events.on(mouseConstraint, "mousedown", (event) => {
       const clickedBody = event.source.body;
       if (clickedBody && !clickedBody.isStatic) {
@@ -268,6 +276,7 @@ export const usePulleyNewScene = (
       }
     });
 
+    //evento apos cada render do canvas pra poder desenhar as forças(flechas) e as linhas(que atuam como as cordas)
     Events.on(render, "afterRender", () => {
       const ctx = render.context;
       if (!leftBlockRef.current) return;
@@ -388,11 +397,13 @@ export const usePulleyNewScene = (
       }
     });
 
+    //configuração do matter-js
     Render.run(render);
     renderRef.current = render;
     const runner = Runner.create();
     Runner.run(runner, engine);
 
+    //configuração necessária do matter-js
     const observer = new ResizeObserver(() => {
       const w = container.clientWidth;
       const h = container.clientHeight;
@@ -412,6 +423,7 @@ export const usePulleyNewScene = (
     });
     observer.observe(container);
 
+    //configuração necessária do matter-js
     return () => {
       observer.disconnect();
       Render.stop(render);
@@ -422,8 +434,10 @@ export const usePulleyNewScene = (
     };
   }, [rightBlockCount]);
 
+  //reset do sistema pra evitar algum resto de memória
   const runningRef = useRef(false);
 
+  //função pra iniciar o movimento do sistema
   const startForce = () => {
     if (runningRef.current) return;
     runningRef.current = true;
@@ -508,10 +522,7 @@ export const usePulleyNewScene = (
     requestAnimationFrame(loop);
   };
 
-  const stopReducingLeftRope = () => {
-    runningRef.current = false;
-  };
-
+  //função pra resetar as posições de todos os blocos e das cordas
   const resetAllPositions = () => {
     runningRef.current = false;
 
@@ -545,6 +556,7 @@ export const usePulleyNewScene = (
     }
   };
 
+  //função pra pegar a aceleração do sistema
   const getAcceleration = () => {
     if (!leftBlockRef.current) return 0;
     if (!rightBlocksRef.current) return 0;
@@ -563,6 +575,7 @@ export const usePulleyNewScene = (
     return systemAccelerationRef.current;
   };
 
+  //função pra setar a massa de um determinado bloco
   const setMassaBloco = (label: string, massa: number) => {
     if (!leftBlockRef.current || !rightBlocksRef.current) return 0;
     if (leftBlockRef.current.label === label) {
@@ -576,6 +589,7 @@ export const usePulleyNewScene = (
     }
   };
 
+  //função pra desativar o mouse
   const disableMouse2 = () => {
     if (mouseConstraintRef.current) {
       mouseConstraintRef.current.constraint.stiffness = 0;
@@ -583,12 +597,14 @@ export const usePulleyNewScene = (
     }
   };
 
+  //função pra ativar o mouse
   const enableMouse2 = () => {
     if (mouseConstraintRef.current) {
       mouseConstraintRef.current.constraint.stiffness = 0.2;
     }
   };
 
+  //função pra pegar todos os blocos como um array para serem manipulados fora do hook
   const getAllBlocksAsArray = () => {
     if (!leftBlockRef.current || !rightBlocksRef.current) return [];
     if (rightBlocksRef.current.length !== rightBlockCount) return [];
@@ -601,10 +617,6 @@ export const usePulleyNewScene = (
   return {
     resetAllPositions,
     startForce,
-    stopReducingLeftRope,
-    leftRopeLengthRef,
-    initialRightRopeLengthRef,
-    remainingRightRopesLengthRef,
     getAllBlocksAsArray,
     getAcceleration,
     enableMouse2,
