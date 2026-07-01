@@ -281,22 +281,32 @@ export const useBlocksScene = (
 
     //configurações necessárias do matter-js
     const observer = new ResizeObserver(() => {
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      if (w > 0 && h > 0) {
-        const dpr = window.devicePixelRatio || 1;
-        render.canvas.width = w * dpr;
-        render.canvas.height = h * dpr;
-        render.canvas.style.width = `${w}px`;
-        render.canvas.style.height = `${h}px`;
-        render.options.width = w;
-        render.options.height = h;
-        Render.lookAt(render, {
-          min: { x: 0, y: 0 },
-          max: { x: w, y: h },
-        });
-      }
+  const w = container.clientWidth;
+  const h = container.clientHeight;
+  if (w > 0 && h > 0) {
+    const dpr = window.devicePixelRatio || 1;
+
+    // Tamanho físico do canvas (pixels reais)
+    render.canvas.width = w * dpr;
+    render.canvas.height = h * dpr;
+
+    // Tamanho CSS (visual)
+    render.canvas.style.width = `${w}px`;
+    render.canvas.style.height = `${h}px`;
+
+    // Matter.js usa coordenadas lógicas (sem DPR)
+    render.options.width = w;
+    render.options.height = h;
+
+    // ✅ Escala o contexto pra compensar o DPR
+    render.context.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    Render.lookAt(render, {
+      min: { x: 0, y: 0 },
+      max: { x: w, y: h },
     });
+  }
+});
     observer.observe(container);
 
     //configurações necessárias do matter-js
