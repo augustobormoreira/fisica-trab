@@ -210,6 +210,16 @@ export const useBlocksScene = (
       if (!forcaRef.current) return;
       if (!allBoxesRef.current) return;
 
+        // ✅ Câmera acompanha os blocos
+      const xs = allBoxesRef.current.map(b => b.position.x);
+      const minX = Math.min(...xs) - 150; // margem à esquerda
+      const maxX = Math.max(...xs) + 150; // margem à direita
+
+      Render.lookAt(render, {
+        min: { x: minX, y: 0 },
+        max: { x: maxX, y: render.options.height! },
+      });
+
       const blocoA = allBoxesRef.current[0];
       let somaAtritos = blocoA.mass * 10 * blocoA.frictionStatic;
 
