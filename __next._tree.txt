@@ -1,2 +1,2 @@
 :HL["/fisica-trab/_next/static/chunks/0uw~6ocuevf2o.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}},"staleTime":300,"buildId":"viPDWqIrTibfEEaxc0OFe"}
+0:{"tree":{"name":"","param":null,"prefetchHints":16,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":0,"slots":null}}},"staleTime":300,"buildId":"CSi-qKgUkgPKkhiwPdT1X"}
